@@ -80,19 +80,28 @@ class BaseOpenAIEngine(EngineLM, CachedEngine):
         if cache_or_none is not None:
             return cache_or_none
 
-        response = self.client.chat.completions.create(
-            model=self.model_string,
-            messages=[
+        request_params = {
+            "model": self.model_string,
+            "messages": [
                 {"role": "system", "content": sys_prompt_arg},
                 {"role": "user", "content": prompt},
             ],
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-        )
+            "frequency_penalty": 0,
+            "presence_penalty": 0,
+            "stop": None,
+        }
+        is_gpt5 = "gpt-5" in self.model_string
+        if not is_gpt5:
+            request_params["temperature"] = temperature
+            request_params["top_p"] = top_p
+
+        # Newer OpenAI models (e.g., gpt-5*) require max_completion_tokens.
+        if is_gpt5:
+            request_params["max_completion_tokens"] = max_tokens
+        else:
+            request_params["max_tokens"] = max_tokens
+
+        response = self.client.chat.completions.create(**request_params)
 
         response = response.choices[0].message.content
         self._save_cache(sys_prompt_arg + prompt, response)
@@ -139,16 +148,25 @@ class BaseOpenAIEngine(EngineLM, CachedEngine):
         if cache_or_none is not None:
             return cache_or_none
 
-        response = self.client.chat.completions.create(
-            model=self.model_string,
-            messages=[
+        request_params = {
+            "model": self.model_string,
+            "messages": [
                 {"role": "system", "content": sys_prompt_arg},
                 {"role": "user", "content": formatted_content},
             ],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-        )
+        }
+        is_gpt5 = "gpt-5" in self.model_string
+        if not is_gpt5:
+            request_params["temperature"] = temperature
+            request_params["top_p"] = top_p
+
+        # Newer OpenAI models (e.g., gpt-5*) require max_completion_tokens.
+        if is_gpt5:
+            request_params["max_completion_tokens"] = max_tokens
+        else:
+            request_params["max_tokens"] = max_tokens
+
+        response = self.client.chat.completions.create(**request_params)
 
         response_text = response.choices[0].message.content
         self._save_cache(cache_key, response_text)
