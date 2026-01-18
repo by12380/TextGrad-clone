@@ -1,3 +1,7 @@
 [submodule "external/subspace-rerouting"]
 	path = external/subspace-rerouting
 	url = https://github.com/by12380/subspace-rerouting
+[submodule "external/pyrit"]
+	path = external/pyrit
+	url = https://github.com/by12380/PyRIT.git
+	branch = ready-for-ssr-data-gen
